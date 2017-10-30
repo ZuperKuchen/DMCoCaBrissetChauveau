@@ -19,4 +19,4 @@ $(EXECS) : $(OBJ) main.c
 .PHONY : clean
 
 clean :
-	rm *.o $(EXECS)
+	rm *.o $(EXECS) *.txt
