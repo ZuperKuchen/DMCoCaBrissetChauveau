@@ -40,17 +40,46 @@ int main(int argc, char **argv){
   }
   int nbVer = orderG(); //nombre de sommets n
   //int nbEdg = sizeG();  //nombre d'aretes m
-  int nbVar = nbVer * height ; //nombre de variables Xv,h
   int nbClauses = 0;
+  int nbVar = nbVer * height ; //nombre de variables Xv,h
+  int nom_var = 1;
 
-  
+  //INITIALISATION VAR//
+  int matrice_var[nbVer][height+1];
+  for(int i=0; i < nbVer; i++){
+    for(int j=0; j <= height; j++){
+      matrice_var[i][j] = nom_var++;
+    }
+  } 
   //
   //ECRIRE LE FICHIER//
   const char* file_name = "file.txt";
   FILE* file = fopen(file_name, "w");
-  char *buffer = "p cnp";
-  fwrite(buffer, sizeof(char), strlen(buffer),file);
-  fwrite(&nbVar, sizeof(char), 1,file);
+  char *buffer = malloc(sizeof(char) * (nbVar*2+2)); //Taille maximal d'une clause: 2*nb variables (variables + espaces) + 2 ( 0 de fin de ligne et \n)
+  sprintf(buffer,"p cnf ");
+  fwrite(buffer, sizeof(char), strlen(buffer), file);
+  sprintf(buffer,"%d",nbVar);
+  fwrite(buffer, sizeof(char), strlen(buffer), file);
+  //  fwrite(&nbVar, sizeof(char), 1,file);
+  sprintf(buffer,"\n");
+    fwrite(buffer, sizeof(char), strlen(buffer), file);
+  //*Condition 1*//
+  for(int i=0; i < nbVer; i++){
+    for(int j=0; j <= height; j++){
+      sprintf(buffer, "%d ", matrice_var[i][j]);
+      fwrite(buffer, sizeof(char), strlen(buffer), file);
+    }
+    sprintf(buffer,"0\n");
+    fwrite(buffer, sizeof(char), strlen(buffer), file);
+    nbClauses++;
+  }
+
+
+
+
+
+
+  
   fclose(file);
   //
   //
@@ -66,7 +95,7 @@ int main(int argc, char **argv){
   //LE PASSER DANS GLUCOSE
   //Penser à gérer le cas ou glucose n'est pas compilé
   //printf("test 1\n");
-  execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name_test, (const char*) NULL);
+  //execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name_test, (const char*) NULL);
   //printf("test 2\n");
   //
   //
