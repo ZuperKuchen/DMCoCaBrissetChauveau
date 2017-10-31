@@ -54,11 +54,13 @@ int main(int argc, char **argv){
   fclose(file);
   //
   //
+  /*
+  char *file_name_out = "res.txt";
+  FILE* file_res = fopen(file_name_out, "w");
+  fclose(file_res);
+  */
 
   char *file_name_test = "test.txt";
-  FILE* file_test = fopen(file_name_test, "w");
-
-
   
   //
   //LE PASSER DANS GLUCOSE
@@ -68,6 +70,10 @@ int main(int argc, char **argv){
   //printf("test 2\n");
   //
   //
+  /*
+  file_res = fopen(file_name_out, "r");
+  fseek(file_res, SEEK_END, 
+  */
   
   
   return 1;
