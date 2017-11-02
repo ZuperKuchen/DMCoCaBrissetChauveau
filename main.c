@@ -33,7 +33,7 @@ int calculeNombreClause(int nb, int k){
   //3eme condition
   res ++;
   //4eme condition
-  //TO DO
+  res += nb * k;
   //return
   return res;
 }
@@ -124,7 +124,21 @@ int main(int argc, char **argv){
 
   //*Condition 4*//
   //TO DO//
-
+  for(int i=0; i < nbVer; i++){
+    for(int j=1; j <= height; j++){
+      sprintf(buffer,"-%d ", matrice_var[i][j]);
+      fwrite(buffer, sizeof(char), strlen(buffer), file);
+      for (int l=0; l < nbVer ; l++){
+	if (i !=l || are_adjacent(i,l)){
+	  sprintf(buffer,"%d ",matrice_var[l][j-1]);
+	  fwrite(buffer, sizeof(char), strlen(buffer), file);
+	}
+      }
+      sprintf(buffer,"0\n");
+      fwrite(buffer, sizeof(char), strlen(buffer), file);
+      nbClauses++;
+    }
+  }
  
 
   printf("Compteur : %d | %d : Calcul \n Il y en a %d qui saute\n",
