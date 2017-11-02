@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #define GLUCOSE_EXE "./glucose-syrup-4.1/simp/glucose"
 #define ARG 0
@@ -19,29 +20,40 @@ void usage(int err){
   }
 }
 
-int main(int argc, char **argv){
+/**Calcule le nombre de clauses de la reduction en foction de
+ **nb = nombre de sommets du graphe
+ **k = profondeur de l'arbre couvrant recherché
+*/
+int calculeNombreClause(int nb, int k){
+  int res = 0;
+  //1ere condition
+  res += nb + nb * ((pow(k,2) + k) / 2);
+  //2eme condition
+  res += 1 + ((pow(nb-1,2) + (nb-1)) / 2);
+  //3eme condition
+  res ++;
+  //4eme condition
+  //TO DO
+  //return
+  return res;
+}
 
-  //TO REMOVE
-  printf("argc: %d \n" ,argc);
-  for (int i=0; i<argc; i++){
-    printf("argv[%d]:%d \n" ,i,atoi(argv[i]));
-  }
-  //
 
-  
+int main(int argc, char **argv){ 
   if (argc != 2) { //On verifie si l'utilisateur à bien passé la hauteur en paramètre
     usage(ARG);
     return EXIT_FAILURE;
   }
-  int height = atoi(argv[1]); //On recupere la hauteur
-  if (height <= 0){ //On verifie que h > 0 
+  int const height = atoi(argv[1]); //On recupere la hauteur
+  if (height <= 0){ //On verifie que k > 0 
     usage(ARG);
     return EXIT_FAILURE;
   }
   int nbVer = orderG(); //nombre de sommets n
   //int nbEdg = sizeG();  //nombre d'aretes m
   int nbClauses = 0;
-  int nbVar = nbVer * (height+1) ; //nombre de variables Xv,h
+  const int nbVar = nbVer * (height+1) ; //nombre de variables Xv,h
+  int nbClausesCal = calculeNombreClause(nbVer, height);
   int nom_var = 1;
 
   //INITIALISATION VAR//
@@ -51,19 +63,16 @@ int main(int argc, char **argv){
       matrice_var[i][j] = nom_var++;
     }
   } 
-  //
+  
   //ECRIRE LE FICHIER//
   const char* file_name = "file.txt";
-  FILE* file = fopen(file_name, "w");
+  FILE* file = fopen(file_name, "w+");
   char *buffer = malloc(sizeof(char) * (nbVar*2+2)); //Taille maximal d'une clause: 2*nb variables (variables + espaces) + 2 ( 0 de fin de ligne et \n)
+  
   //*1ere ligne*//
-  sprintf(buffer,"p cnf ");
+  sprintf(buffer,"p cnf %d %d\n ",nbVar, nbClausesCal);
   fwrite(buffer, sizeof(char), strlen(buffer), file);
-  sprintf(buffer,"%d",nbVar);
-  fwrite(buffer, sizeof(char), strlen(buffer), file);
-  sprintf(buffer,"\n");
-  fwrite(buffer, sizeof(char), strlen(buffer), file);
-
+  
   //*Condition 1*//
   //Pour tout v dans V Il existe au moins un h tel que Xvh vrai 
   for(int i=0; i < nbVer; i++){
@@ -118,9 +127,8 @@ int main(int argc, char **argv){
 
  
 
-
-
-  
+  printf("Compteur : %d | %d : Calcul \n Il y en a %d qui saute\n",
+	 nbClauses, nbClausesCal, nbClauses - nbClausesCal);
   fclose(file);
   //
   //
@@ -132,13 +140,14 @@ int main(int argc, char **argv){
   //
   //LE PASSER DANS GLUCOSE
   //Penser à gérer le cas ou glucose n'est pas compilé
-  execl(GLUCOSE_EXE, GLUCOSE_EXE, file, file_res, (const char*) NULL);
+  execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name, file_res_name, (const char*) NULL);
   //
   //
   /*
   file_res = fopen(file_name_out, "r");
   fseek(file_res, SEEK_END, 
   */
+  fclose(file_res);
   
   
   return 1;
