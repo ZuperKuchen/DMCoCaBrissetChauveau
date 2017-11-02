@@ -4,15 +4,25 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define GLUCOSE_EXE "./glucose-syrup-4.1/simp/glucose"
-#define ARG 0
-#define FIN_LIGNE "\n"
+#define ARG       0
+#define OPEN_FAIL 1
+#define FORK      2
 
-void usage(int err){
+
+void usage(int err, char* str){
   switch(err){
   case ARG:
     printf("usage : ./nom_exe h avec h > 0 \n");
+    break;
+  case OPEN_FAIL:
+    printf("probleme lors de l'ouverture de %s \n",str);
+    break;
+  case FORK:
+    printf("probleme de fork() !\n");
     break;
   default:
     printf("Appel usage non reconnue \n");
@@ -41,12 +51,12 @@ int calculeNombreClause(int nb, int k){
 
 int main(int argc, char **argv){ 
   if (argc != 2) { //On verifie si l'utilisateur à bien passé la hauteur en paramètre
-    usage(ARG);
+    usage(ARG,NULL);
     return EXIT_FAILURE;
   }
   int const height = atoi(argv[1]); //On recupere la hauteur
   if (height <= 0){ //On verifie que k > 0 
-    usage(ARG);
+    usage(ARG,NULL);
     return EXIT_FAILURE;
   }
   int nbVer = orderG(); //nombre de sommets n
@@ -123,7 +133,6 @@ int main(int argc, char **argv){
   nbClauses++;
 
   //*Condition 4*//
-  //TO DO//
   for(int i=0; i < nbVer; i++){
     for(int j=1; j <= height; j++){
       sprintf(buffer,"-%d ", matrice_var[i][j]);
@@ -144,25 +153,51 @@ int main(int argc, char **argv){
   printf("Compteur : %d | %d : Calcul \n Il y en a %d qui saute\n",
 	 nbClauses, nbClausesCal, nbClauses - nbClausesCal);
   fclose(file);
-  //
-  //
+  ///// *****************************************///////////////////
   
   char *file_res_name = "res.txt";
-  FILE* file_res = fopen(file_res_name, "w");
-  //fclose(file_res);
-  
+    
   //
   //LE PASSER DANS GLUCOSE
   //Penser à gérer le cas ou glucose n'est pas compilé
-  execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name, file_res_name, (const char*) NULL);
+  pid_t pid ;//= fork();
+  /*if (pid == -1){
+    usage(FORK,NULL);
+    return EXIT_FAILURE;
+  }
+  //if (pid > 0){
+    int status;
+    wait(&status);
+    printf("...\n%d\n",status);
+    }*/ 
+  if ((pid = fork()) == 0){
+    execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name, file_res_name, (const char*) NULL);  
+  }
   //
-  //
-  /*
-  file_res = fopen(file_name_out, "r");
-  fseek(file_res, SEEK_END, 
-  */
+  FILE* file_res = fopen(file_res_name, "r");
+  if(!file_res){
+    usage(OPEN_FAIL,file_res_name);
+    return EXIT_FAILURE;
+  }
+  char c = fgetc(file_res);
+  while(c != EOF){
+    if ((char)c == '-'){
+      while( c != ' ' || c != EOF){
+	fseek(file_res,1, SEEK_CUR);
+	c = fgetc(file_res);
+      }
+    }
+    if((char)c != ' '){
+      printf("%d ",c);
+    }
+    c = fgetc(file_res);
+  }
+  printf("\n");
+  
+  
+  
   fclose(file_res);
   
-  
+  printf("ta daronne\n");
   return 1;
   }
