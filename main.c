@@ -12,13 +12,14 @@
 #define OPEN_FAIL 1
 #define FORK      2
 #define EXEC      3
+#define NBCLAUSES 4
 #define LIM_BUF   10
 
 
 void usage(int err, char* str){
   switch(err){
   case ARG:
-    printf("usage : ./nom_exe h avec h > 0 \n");
+    printf("usage : ./nom_exe h avec 0 < h < nbSom \n");
     break;
   case OPEN_FAIL:
     printf("probleme lors de l'ouverture de %s \n",str);
@@ -29,6 +30,8 @@ void usage(int err, char* str){
   case EXEC:
     printf("execl n'a pas lancé %s\n",str);
     break;
+  case NBCLAUSES:
+    printf("Problème de nombre de clauses. \n");
   default:
     printf("Appel usage non reconnue \n");
     break;
@@ -69,6 +72,8 @@ int calculeNombreClause(int nb, int k){
   return res;
 }
 
+/*Ecrit le nombre de sommets et la matrice d'adjacence d'un graphe dans le fichier str, créé à l'occasion
+ */
 void write_matrice(int nbVer, int matrice_adj[nbVer][nbVer], char* str){
   char *buffer = malloc(sizeof(char)*50); //Bien suffisant
   FILE *file = fopen(str, "w+");
@@ -100,7 +105,7 @@ int main(int argc, char **argv){
     return EXIT_FAILURE;
   }
   int const height = atoi(argv[1]); //On recupere la hauteur
-  if (height <= 0){ //On verifie que k > 0 
+  if (height <= 0 || height > orderG()){ //On verifie que 0< k < nbSom 
     usage(ARG,NULL);
     return EXIT_FAILURE;
   }
@@ -214,12 +219,14 @@ int main(int argc, char **argv){
       nbClauses++;
     }
   }
- 
-
-  printf("Compteur : %d | %d : Calcul \n Il y en a %d qui saute\n",
-	 nbClauses, nbClausesCal, nbClauses - nbClausesCal);
+  
+  if(nbClauses != nbClausesCal){ //On verifie le nombre de clauses
+    usage(NBCLAUSES,NULL);
+    return EXIT_FAILURE;
+  }
+  
   fclose(file);
-  ///// *****************************************///////////////////
+  
   
   char *file_res_name = "res.txt";
     
@@ -282,23 +289,11 @@ int main(int argc, char **argv){
     }
   }
   
-  
-  for(int i = 0; i < nbVer; i++){
-    printf("%d ", tab_res[i]);
-  }
-  printf("\n");
-
-
   //AJOUT
   //On "clean" le tableau
   for(int i = 0; i < nbVer; i++){
     tab_res[i] = tab_res[i] - i*height - i -1;
   }
-  //TMP
-   for(int i = 0; i < nbVer; i++){
-    printf("%d ", tab_res[i]);
-  }
-  printf("\n");
   
   //FIN TMP
   SAT_to_HAC( nbVer,tab_res, matrice_adj, height);
