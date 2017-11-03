@@ -35,6 +35,51 @@ void usage(int err, char* str){
   }
 }
 
+/*Calcule la matrice d'adjacence de l'arbre couvrant en fonction du tableau de variables t
+*/
+void SAT_to_HAC(int nbVer,int t[nbVer], int matrice_adj[nbVer][nbVer], int height){
+  //Initialisation matrice d'adjacence
+  for(int i=0 ; i < nbVer ; i++){
+    for(int j=0 ; j < nbVer ; j++){
+      matrice_adj[i][j] = 0;
+    }
+  }
+
+  int tab_parents_pots[height+1][nbVer];
+  //on initialise à -1
+  for (int i = 0; i <= height ; i++){
+    for (int j=0 ; j < nbVer; j++){
+      tab_parents_pots[i][j] = -1;
+    }
+  }
+
+  //On remplit les parents potentiels
+  int cpt;
+  for (int k = 0; k <= height ; k++){
+    cpt = 0;
+    for (int i=0 ; i < nbVer; i++){
+      if (t[i] == k){ 
+	tab_parents_pots[k][cpt++] = i;
+      }
+    }
+  }
+
+  //On remplit la matrice d'adjacence
+  for (int k = 1; k <= height; k++){
+    for (int i = 0; i < nbVer; i++){
+      if (t[i] == k){
+	for(int j = 0; j < nbVer; j++){
+	  if(are_adjacent(tab_parents_pots[k][j],i)){
+	    matrice_adj[tab_parents_pots[k][j]][i] = 1;
+	    matrice_adj[i][tab_parents_pots[k][j]] = 1;
+	    break;
+	  }
+	}
+      }
+    }
+  }
+}
+
 /**Calcule le nombre de clauses de la reduction en foction de
  **nb = nombre de sommets du graphe
  **k = profondeur de l'arbre couvrant recherché
@@ -53,6 +98,30 @@ int calculeNombreClause(int nb, int k){
   return res;
 }
 
+void write_matrice(int nbVer, int matrice_adj[nbVer][nbVer], char* str){
+  char *buffer = malloc(sizeof(char)*50); //Bien suffisant
+  FILE *file = fopen(str, "w+");
+  if(!file){
+    usage(OPEN_FAIL,str);
+    exit(EXIT_FAILURE);
+  }
+  sprintf(buffer,"Nombre de sommets:%d \n", nbVer);
+  fwrite(buffer, sizeof(char), strlen(buffer), file);
+  sprintf(buffer,"Matrice d'adjacence: \n");
+  fwrite(buffer, sizeof(char), strlen(buffer), file);
+  for (int i = 0; i < nbVer; i++){
+    sprintf(buffer,"( ");
+    fwrite(buffer, sizeof(char), strlen(buffer), file);
+    for (int j = 0; j < nbVer ; j++){
+      sprintf(buffer, "%d ", matrice_adj[i][j]);
+      fwrite(buffer, sizeof(char), strlen(buffer), file);
+    }
+    sprintf(buffer,")\n");
+    fwrite(buffer, sizeof(char), strlen(buffer), file);
+  }
+  fclose(file);
+  free(buffer);
+}
 
 int main(int argc, char **argv){ 
   if (argc != 2) { //On verifie si l'utilisateur à bien passé la hauteur en paramètre
@@ -70,6 +139,24 @@ int main(int argc, char **argv){
   const int nbVar = nbVer * (height+1) ; //nombre de variables Xv,h
   int nbClausesCal = calculeNombreClause(nbVer, height);
   int nom_var = 1;
+
+  //Matrice d'adjacence du graphe 
+  int matrice_adj[nbVer][nbVer];
+  for (int i = 0 ;i < nbVer; i++){
+    for (int j = 0; j < nbVer; j++){
+      if(are_adjacent(i,j)){
+	matrice_adj[i][j] = 1;
+	matrice_adj[j][i] = 1;
+      }
+      else{
+	matrice_adj[i][j] = 0;
+	matrice_adj[j][i] = 0;
+      }
+    }
+  }
+  write_matrice(nbVer,matrice_adj,"Probleme.txt");
+
+ 
 
   //INITIALISATION VAR//
   int matrice_var[nbVer][height+1];
@@ -229,12 +316,25 @@ int main(int argc, char **argv){
   }
   
   printf("\n");
+
+
+  //AJOUT
+  //On "clean" le tableau
+  for(int i = 0; i < nbVer; i++){
+    tab_res[i] = tab_res[i] - i*height - i -1;
+  }
+  //TMP
+   for(int i = 0; i < nbVer; i++){
+    printf("%d ", tab_res[i]);
+  }
   
-  
+  printf("\n");
+  //FIN TMP
+  SAT_to_HAC( nbVer,tab_res, matrice_adj, height);
+  write_matrice(nbVer, matrice_adj, "Solution.txt");
   fclose(file_res);
-  
-  printf("ta daronne\n");
-  
+  free(buffer);
+  free(cbuf_res);
   return 1;
   
 }
