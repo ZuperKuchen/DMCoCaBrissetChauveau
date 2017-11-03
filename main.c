@@ -12,6 +12,7 @@
 #define OPEN_FAIL 1
 #define FORK      2
 #define EXEC      3
+#define LIM_BUF   10
 
 
 void usage(int err, char* str){
@@ -191,24 +192,46 @@ int main(int argc, char **argv){
     usage(OPEN_FAIL,file_res_name);
     return EXIT_FAILURE;
   }
-  char c = fgetc(file_res);
-  while(c != EOF){
-    if ((char)c == '-'){
-      while( c != ' ' || c != EOF){
-	fseek(file_res,1, SEEK_CUR);
-	c = fgetc(file_res);
+  int tab_res[nbVer];
+  int ind_tab = 0;
+  int ibuf;
+  char* cbuf_res= malloc(sizeof(char)*LIM_BUF);
+  int cursor_res = 0;
+  char cbuf;
+  fread(&cbuf, sizeof(char), 1, file_res);
+  while(cbuf != '\n'){
+    if(cbuf == '-'){
+      while(cbuf != ' '){
+	fread(&cbuf, sizeof(char), 1, file_res);
       }
+      fread(&cbuf, sizeof(char), 1, file_res);
     }
-    if((char)c != ' '){
-      printf("%d ",c);
+    else{
+      while(cbuf != ' ' && cbuf != '\n'){
+	cbuf_res[cursor_res] = cbuf;
+	cursor_res++;
+	fread(&cbuf, sizeof(char), 1, file_res);
+      }
+      cbuf_res[cursor_res] = '\0';
+      cursor_res = 0;
+      ibuf = atoi(cbuf_res);
+      if(ibuf != 0){
+	tab_res[ind_tab] = ibuf;
+	ind_tab++;
+      }
+      fread(&cbuf, sizeof(char), 1, file_res);
     }
-    c = fgetc(file_res);
   }
+  
+
+  for(int i = 0; i < nbVer; i++){
+    printf("%d ", tab_res[i]);
+  }
+  
   printf("\n");
   
   
-  
-  //fclose(file_res);
+  fclose(file_res);
   
   printf("ta daronne\n");
   
