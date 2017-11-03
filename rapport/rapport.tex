@@ -88,23 +88,42 @@ Complexité \& Calculabilité}
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 
-\begin{abstract}
-%   Find something meaningful to say in english in order to describe the present report...
-    
-    Relativity is one of the most beautiful theories we can come across in physics. It has some magic in it as it is mainly based on mere \ofg{thought experiments}. Nevertheless, in Phycics, it is experimental evidence that decides whether a theory is worth developping and the advance of Mercury's perihelion was one of the most exciting moments of truth Einstein faced with its \ofg{General Relativity} theory.
-    
-    In this work, we tried to understand how some glimpses of relativity could shed light on one of the late \textsc{xix}$^{\text{th}}$ century mysteries.
-\end{abstract}
+\section{Présentation du problème}
+Un arbre couvrant d'un graphe non orienté $G =\{V,E\}$ est un arbre constitué uniquement d'arête $E(G)$ et contenant tous les sommet $V(G)$. Nos  arbres couvrants seront toujours enracinés: un sommet est distingué et appelé la racine de l’arbre. La profondeur $d(v)$ d’un sommet dans l’arbre est la distance par rapport à la racine, c’est-à-dire le nombre d’arêtes sur le chemin direct de la racine à $v$. La hauteur d’un arbre est la profondeur maximale d’un de ses sommets , $max_{v\in V}(d(v))$. Formellement, le problème HAC est le suivant: \\
+\indent \textbf{Entrée : } Un graphe non-orienté $G$ et un entier $k$. \\
+\indent \textbf{Sortie : }Existe-t-il un arbre couvrant de $G$ de hauteur exactement $k$ ?\\
+
+\section{HAC est NP-difficile}
+OK
+
+\newpage
+\section{Réduction de HAC vers SAT}
+\textbf{\underline{1. Pour chaque sommet $v \in V$, il y un unique entier h t.q. $x_{v,h}$ est vrai}}
+\[
+\bigwedge_{v \in V}( \bigvee_{h = 0}^{k} (x_{v,h}) \wedge \bigwedge_{u \in V, i=0, j=0, i!=j}^{k} \overline{x_{v,i}} \vee \overline{x_{u,j}})
+\]
+
+\textbf{\underline{2. Il y a un unique sommet $v$ t.q. $d(v) = 0$ (``v est la racine'')}}
+\[
+\bigvee_{v \in V} x_{v,0} \wedge \bigwedge_{i,j \in V, i!=j} (\overline{x_{i,0}} \vee \overline{x_{j,0}})
+\]
+
+\textbf{\underline{3. Il y a au moins un sommet $v$ t.q. $d(v)$ = $k$}}
+\[
+\bigvee_{v \in V}x_{v,k}
+\]
+
+\textbf{\underline{4. Pour chaque sommet $v$, si $d(v) > 0$, alors il existe un sommet $u$ tel que $uv \in E$ et $d(v) = d(v) - 1$}}
+\[
+\bigwedge_{v \in V, i=0}^{k} \overline{x_{v,i}} \vee \bigvee_{uv \in E} x_{u,i-1}
+\]
+
 
 %%%%%%%%%%%%%%%%%%%%
 \begin{comment}
-
-\section{Introduction à la dynamique relativiste : relation
-fondamentale et conservation de l'énergie}
-On peut s'interroger sur la forme que prendra la généralisation
-relativiste de la relation fondamentale de la dynamique newtonienne :
-
 \begin{equation}
     \ddt{\vec{p}} = \sum \vec{F} 
     \qquad \text{avec} \qquad 
