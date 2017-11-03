@@ -41,46 +41,17 @@ void SAT_to_HAC(int nbVer,int t[nbVer], int matrice_adj[nbVer][nbVer], int heigh
   //Initialisation matrice d'adjacence
   for(int i=0 ; i < nbVer ; i++){
     for(int j=0 ; j < nbVer ; j++){
-      matrice_adj[i][j] = 0;
-    }
-  }
-
-  int tab_parents_pots[height+1][nbVer];
-  //on initialise à -1
-  for (int i = 0; i <= height ; i++){
-    for (int j=0 ; j < nbVer; j++){
-      tab_parents_pots[i][j] = -1;
-    }
-  }
-
-  //On remplit les parents potentiels
-  int cpt;
-  for (int k = 0; k <= height ; k++){
-    cpt = 0;
-    for (int i=0 ; i < nbVer; i++){
-      if (t[i] == k){ 
-	tab_parents_pots[k][cpt++] = i;
-      }
-    }
-  }
-
-  //On remplit la matrice d'adjacence
-  for (int k = 1; k <= height; k++){
-    for (int i = 0; i < nbVer; i++){
-      if (t[i] == k){
-	for(int j = 0; j < nbVer; j++){
-	  if(are_adjacent(tab_parents_pots[k][j],i)){
-	    matrice_adj[tab_parents_pots[k][j]][i] = 1;
-	    matrice_adj[i][tab_parents_pots[k][j]] = 1;
-	    break;
-	  }
-	}
+      if(are_adjacent(i, j) && fabs(t[i]-t[j]) == 1){
+	matrice_adj[i][j] = 1;
+      }else{
+	matrice_adj[i][j] = 0;
       }
     }
   }
 }
+  
 
-/**Calcule le nombre de clauses de la reduction en foction de
+/**Calcule le nombre de clauses de la reduction en fonction de
  **nb = nombre de sommets du graphe
  **k = profondeur de l'arbre couvrant recherché
 */
@@ -134,7 +105,6 @@ int main(int argc, char **argv){
     return EXIT_FAILURE;
   }
   int nbVer = orderG(); //nombre de sommets n
-  //int nbEdg = sizeG();  //nombre d'aretes m
   int nbClauses = 0;
   const int nbVar = nbVer * (height+1) ; //nombre de variables Xv,h
   int nbClausesCal = calculeNombreClause(nbVer, height);
@@ -255,37 +225,39 @@ int main(int argc, char **argv){
     
   //
   //LE PASSER DANS GLUCOSE
-  //Penser à gérer le cas ou glucose n'est pas compilé
-  pid_t pid ;//= fork();
-  /*if (pid == -1){
-    usage(FORK,NULL);
-    return EXIT_FAILURE;
-  }
-  //if (pid > 0){
-    int status;
-    wait(&status);
-    printf("...\n%d\n",status);
-    }*/
+  //
+  pid_t pid ;
   pid = fork();
   if (pid == 0){
     execl(GLUCOSE_EXE, "./glucose", file_name, file_res_name, '\0');
     usage(EXEC,"glucose");
-    fprintf(stderr,"execl ne s'est pas lancé\n");
+    return EXIT_FAILURE;
   }
 
-  wait(NULL);
+  wait(NULL);          // On attend que glucose ai fini de s'exécuter
+
+  
   FILE* file_res = fopen(file_res_name, "r");
   if(!file_res){
     usage(OPEN_FAIL,file_res_name);
     return EXIT_FAILURE;
   }
+
+  
+  char cbuf;
+  fread(&cbuf, sizeof(char), 1, file_res);
+  if(cbuf == 'U'){
+    fclose(file_res);
+    free(buffer);
+    return 0;                  //Si c'est unsat on arrête le programme
+  }
+
   int tab_res[nbVer];
   int ind_tab = 0;
   int ibuf;
   char* cbuf_res= malloc(sizeof(char)*LIM_BUF);
   int cursor_res = 0;
-  char cbuf;
-  fread(&cbuf, sizeof(char), 1, file_res);
+  
   while(cbuf != '\n'){
     if(cbuf == '-'){
       while(cbuf != ' '){
@@ -310,11 +282,10 @@ int main(int argc, char **argv){
     }
   }
   
-
+  
   for(int i = 0; i < nbVer; i++){
     printf("%d ", tab_res[i]);
   }
-  
   printf("\n");
 
 
@@ -327,14 +298,15 @@ int main(int argc, char **argv){
    for(int i = 0; i < nbVer; i++){
     printf("%d ", tab_res[i]);
   }
-  
   printf("\n");
+  
   //FIN TMP
   SAT_to_HAC( nbVer,tab_res, matrice_adj, height);
   write_matrice(nbVer, matrice_adj, "Solution.txt");
   fclose(file_res);
   free(buffer);
   free(cbuf_res);
+  
   return 1;
   
 }
