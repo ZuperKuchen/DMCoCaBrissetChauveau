@@ -184,7 +184,8 @@ int main(int argc, char **argv){
     usage(EXEC,"glucose");
     fprintf(stderr,"execl ne s'est pas lancé\n");
   }
-  
+
+  wait(NULL);
   FILE* file_res = fopen(file_res_name, "r");
   if(!file_res){
     usage(OPEN_FAIL,file_res_name);
