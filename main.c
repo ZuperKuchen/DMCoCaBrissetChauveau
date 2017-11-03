@@ -11,6 +11,7 @@
 #define ARG       0
 #define OPEN_FAIL 1
 #define FORK      2
+#define EXEC      3
 
 
 void usage(int err, char* str){
@@ -23,6 +24,9 @@ void usage(int err, char* str){
     break;
   case FORK:
     printf("probleme de fork() !\n");
+    break;
+  case EXEC:
+    printf("execl n'a pas lancé %s\n",str);
     break;
   default:
     printf("Appel usage non reconnue \n");
@@ -177,6 +181,7 @@ int main(int argc, char **argv){
   pid = fork();
   if (pid == 0){
     execl(GLUCOSE_EXE, "./glucose", file_name, file_res_name, '\0');
+    usage(EXEC,"glucose");
     fprintf(stderr,"execl ne s'est pas lancé\n");
   }
   
