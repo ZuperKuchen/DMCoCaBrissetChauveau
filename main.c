@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define GLUCOSE_EXE "./glucose-syrup-4.1/simp/glucose"
+#define GLUCOSE_EXE "glucose-syrup-4.1/simp/glucose"
 #define ARG       0
 #define OPEN_FAIL 1
 #define FORK      2
@@ -75,12 +75,16 @@ int main(int argc, char **argv){
   } 
   
   //ECRIRE LE FICHIER//
-  const char* file_name = "file.txt";
+  char* file_name = "file.txt";
   FILE* file = fopen(file_name, "w+");
+  if(!file){
+    usage(OPEN_FAIL,file_name);
+    return EXIT_FAILURE;
+  }
   char *buffer = malloc(sizeof(char) * (nbVar*2+2)); //Taille maximal d'une clause: 2*nb variables (variables + espaces) + 2 ( 0 de fin de ligne et \n)
   
   //*1ere ligne*//
-  sprintf(buffer,"p cnf %d %d\n ",nbVar, nbClausesCal);
+  sprintf(buffer,"p cnf %d %d\n",nbVar, nbClausesCal);
   fwrite(buffer, sizeof(char), strlen(buffer), file);
   
   //*Condition 1*//
@@ -138,7 +142,7 @@ int main(int argc, char **argv){
       sprintf(buffer,"-%d ", matrice_var[i][j]);
       fwrite(buffer, sizeof(char), strlen(buffer), file);
       for (int l=0; l < nbVer ; l++){
-	if (i !=l || are_adjacent(i,l)){
+	if (are_adjacent(i,l)){
 	  sprintf(buffer,"%d ",matrice_var[l][j-1]);
 	  fwrite(buffer, sizeof(char), strlen(buffer), file);
 	}
@@ -169,11 +173,13 @@ int main(int argc, char **argv){
     int status;
     wait(&status);
     printf("...\n%d\n",status);
-    }*/ 
-  if ((pid = fork()) == 0){
-    execl(GLUCOSE_EXE, GLUCOSE_EXE, file_name, file_res_name, (const char*) NULL);  
+    }*/
+  pid = fork();
+  if (pid == 0){
+    execl(GLUCOSE_EXE, "./glucose", file_name, file_res_name, '\0');
+    fprintf(stderr,"execl ne s'est pas lancé\n");
   }
-  //
+  
   FILE* file_res = fopen(file_res_name, "r");
   if(!file_res){
     usage(OPEN_FAIL,file_res_name);
@@ -196,8 +202,10 @@ int main(int argc, char **argv){
   
   
   
-  fclose(file_res);
+  //fclose(file_res);
   
   printf("ta daronne\n");
+  
   return 1;
-  }
+  
+}
